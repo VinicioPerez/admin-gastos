@@ -4,11 +4,20 @@
 
 
     const presupuesto = ref(0)
+    const error = ref ('')
+
+    const emit = defineEmits(['definir-presupuesto'])
 
     const definirPresupuesto = () => {
-        if (presupuesto.value <= 0) {
-            console.log('Presupuesto no válido')
+        if (presupuesto.value <= 0 || presupuesto.value === '') {
+            error.value = 'Presupuesto no válido'
+
+            setTimeout(() => {
+                error.value = ''
+            }, 3000);
+            return
         }
+        emit('definir-presupuesto', presupuesto.value)
     }
 
 </script>
@@ -18,9 +27,10 @@
         class="presupuesto"
         @submit.prevent="definirPresupuesto"
     >
-        <Alerta>
-            <h2>Error!</h2>
-            <p>Hubo un error</p>
+        <Alerta
+            v-if="error"
+        >
+           {{ error }}
         </Alerta>
         <div class="campo">
             <label for="">Definir presupuesto</label>

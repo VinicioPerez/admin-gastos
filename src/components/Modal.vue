@@ -1,5 +1,5 @@
 <script setup>
-    import { ref } from 'vue'
+    import { ref, computed } from 'vue'
     import Alerta from './Alerta.vue'
     import cerrarModal from '../assets/img/cerrar.svg'
 
@@ -10,7 +10,9 @@
         'guardar-gasto',
         'update:nombre',
         'update:cantidad',
-        'update:categoria'
+        'update:categoria',
+        'eliminar-gasto'
+
     ])
 
     const props = defineProps({
@@ -33,8 +35,14 @@
         disponible:{
             type: Number,
             required: true
+        },
+        id:{
+            type: [String, null],
+            required: true
         }
     })
+
+    const old = props.cantidad
 
     const agregarGasto = () => {
         // Validar que no haya campos vacios
@@ -57,17 +65,30 @@
         }
 
         //Validar que el usuario no gaste mas de lo disponible
-        if(cantidad > disponible) {
-            error.value = 'Has exedido el presupueto'
-            setTimeout(() => {
-                error.value = ''
-            }, 3000);
-            return
+        if (id) {
+            //Tomar en cuenta el gasto ya realizado
+            if (cantidad > old + disponible) {
+                error.value = 'Has exedido el presupueto'
+                setTimeout(() => {
+                    error.value = ''
+                }, 3000);
+                return                
+            }
+        } else {
+            if(cantidad > disponible) {
+                error.value = 'Has exedido el presupueto'
+                setTimeout(() => {
+                    error.value = ''
+                }, 3000);
+                return
+            }            
         }
-
-
         emit('guardar-gasto')
     }
+
+    const isEditing = computed(() => {
+        return props.id
+    })
 
         
 
@@ -89,7 +110,7 @@
                 class="nuevo-gasto"
                 @submit.prevent="agregarGasto"
             >
-                <legend>Añadir Gasto</legend>
+                <legend>{{ isEditing ? 'Guardar Cambios' : 'Añadir Gasto' }}</legend>
 
                 <Alerta v-if="error">{{ error }}</Alerta>
 
@@ -132,9 +153,17 @@
                 </div>
                 <input 
                     type="submit"
-                    value="Añadir Gasto"
+                    :value="[isEditing ? 'Guardar Cambios' : 'Añadir Gasto']"
                 >
             </form>
+            <button
+                type="button"
+                class="btn-eliminar"
+                v-if="isEditing"
+                @click="$emit('eliminar-gasto')"
+            >
+                Eliminar Gasto
+            </button>
 
         </div>
     </div>
@@ -217,5 +246,17 @@
         cursor: pointer;
     }
 
+    .btn-eliminar{
+        border: none;
+        padding: 1rem;
+        border-radius: 1rem;
+        width: 100%;
+        background-color: #ef4444;
+        font-weight: 700;
+        font-size: 1.5rem;
+        color: var(--blanco);
+        margin-top: 10rem;
+        cursor: pointer;
+    }
 
 </style>

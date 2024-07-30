@@ -7,6 +7,7 @@
 
     const emit = defineEmits([
         'ocultar-modal',
+        'guardar-gasto',
         'update:nombre',
         'update:cantidad',
         'update:categoria'
@@ -27,6 +28,10 @@
         },
         categoria:{
             type: String,
+            required: true
+        },
+        disponible:{
+            type: Number,
             required: true
         }
     })
@@ -50,7 +55,18 @@
             }, 3000);
             return
         }
-        console.log('Emitiendo gasto')
+
+        //Validar que el usuario no gaste mas de lo disponible
+        if(cantidad > disponible) {
+            error.value = 'Has exedido el presupueto'
+            setTimeout(() => {
+                error.value = ''
+            }, 3000);
+            return
+        }
+
+
+        emit('guardar-gasto')
     }
 
         
@@ -94,7 +110,7 @@
                         id="cantidad"
                         placeholder="Añade la cantidad del Gasto, ej. 300"
                         :value="cantidad"
-                        @input="$emit('update:cantidad', $event.target.value)"
+                        @input="$emit('update:cantidad', +$event.target.value)"
                     />
                 </div>
                 <div class="campo">
@@ -102,7 +118,7 @@
                     <select 
                         id="categoria"
                         :value="categoria"
-                        @input="$emit('update:categoria', +$event.target.value)"
+                        @input="$emit('update:categoria', $event.target.value)"
                     >
                         <option value="">-- Seleccione --</option>
                         <option value="ahorro">Ahorro</option>

@@ -1,8 +1,10 @@
 <script setup>
-  import { ref, reactive } from 'vue'
+  import { ref, reactive, watch } from 'vue'
   import Presupuesto from './components/Presupuesto.vue';
   import ControlPresupuesto from './components/ControlPresupuesto.vue';
   import Modal from './components/Modal.vue';
+  import Gasto from './components/Gasto.vue';
+  import { generarId } from './helpers';
 
   import iconoNuevoGasto from './assets/img/nuevo-gasto.svg'
 
@@ -13,6 +15,9 @@
 
   const presupuesto = ref(0)
   const disponible = ref(0)
+  const gastado = ref(0)
+
+  const gastos = ref([])
 
   const gasto = reactive({
     nombre: '',
@@ -20,6 +25,14 @@
     categoria: '',
     id:null,
     fecha: Date.now()
+  })
+
+  watch(gastos, () => {
+    const totalGastado = gastos.value.reduce((total, gasto) => gasto.cantidad + total, 0)
+    gastado.value = totalGastado
+    disponible.value = presupuesto.value - totalGastado
+  },{
+    deep: true
   })
 
   const definirPresupuesto = (cantidad) => {
@@ -41,11 +54,30 @@
     }, 300);
   }
 
+  const guardarGasto = () => {
+    gastos.value.push({
+      ...gasto,
+      id: generarId()
+    })
+    ocultarModal()
+
+    //Reiniciar el objeto
+    Object.assign(gasto, {
+      nombre: '',
+      cantidad: '',
+      categoria: '',
+      id:null,
+      fecha: Date.now()
+    })
+  }
+
 
 </script>
   
 <template>
- <div>
+ <div
+    :class="{fijar: modal.mostrar}"
+ >
   <header>
     <h1>Planificador de Gastos</h1>
     <div class="contenedor-header contenedor sombra">
@@ -57,12 +89,24 @@
         v-else
         :presupuesto="presupuesto"
         :disponible="disponible"
+        :gastado="gastado"        
       />
       
     </div>
   </header>
 
   <main v-if="presupuesto > 0">
+
+    <div class="listado-gastos contenedor">
+      <h2>{{gastos.length > 0 ? 'Gastos' : 'No hay gastos'}}</h2>
+      <Gasto
+        v-for="gasto in gastos"
+        :key="gasto.id"
+        :gasto="gasto"
+      />
+
+    </div>
+
     <div class="crear-gasto">
       <img 
         :src="iconoNuevoGasto" 
@@ -74,7 +118,9 @@
     <Modal 
       v-if="modal.mostrar"
       @ocultar-modal="ocultarModal"
+      @guardar-gasto="guardarGasto"
       :modal="modal"
+      :disponible="disponible"
       v-model:nombre="gasto.nombre"
       v-model:cantidad="gasto.cantidad"
       v-model:categoria="gasto.categoria"
@@ -121,6 +167,10 @@ h1{
 h2{
   font-size: 3rem;
 }
+.fijar{
+  overflow: hidden;
+  height: 100vh;
+}
 header{
   background-color: var(--azul);
 }
@@ -154,6 +204,16 @@ header h1{
 .crear-gasto img{
   width: 5rem;
   cursor: pointer;
+}
+
+.listado-gastos{
+  margin-top: 10rem;
+
+}
+
+.listado-gastos h2{ 
+  font-weight: 900;
+  color: var(--gris-oscuro);
 }
 
  
